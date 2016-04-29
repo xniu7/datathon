@@ -106,6 +106,18 @@ def calc_transition_matrixs(graph):
             prod_country_matrix[product_mapping[each_product]][country_mapping[each_country]] \
                                 = graph[each_product][each_country]['weight']
 
+    # # handle "dangling" nodes
+    # # "dangling" nodes only consume energies, so we release these energies manually
+    # country_norm = np.sum(country_prod_matrix, 1)
+    # for i in range(n_countries):
+    #     if country_norm[i] == 0:
+    #         country_prod_matrix[i] = 1.0 / n_products
+
+    # product_norm = np.sum(prod_country_matrix, 1)
+    # for i in range(n_products):
+    #     if product_norm[i] == 0:
+    #         prod_country_matrix[i] = 1.0 / n_countries
+
 
     return country_mapping, product_mapping, country_prod_matrix, prod_country_matrix
 
@@ -119,7 +131,7 @@ def run_bipartite(country_prod_matrix, prod_country_matrix, max_iter=100, tol=1.
     country_scores = np.ones((n_countries, ))
     product_scores = np.ones((n_products, ))
 
-    import pdb;pdb.set_trace()
+
     # power iteration: make up to max_iter iterations
     # set country_scores as convergence condition
     itr = 0
@@ -194,7 +206,7 @@ if __name__ == "__main__":
 
     country_scores, product_scores = run_bipartite(country_prod_matrix, prod_country_matrix, max_iter=10000, tol=1.0e-5)
 
-    import pdb;pdb.set_trace()
+
     country_id_scores = {graph.node[id_]['entity_id']:country_scores[idx] for id_, idx in country_mapping.iteritems()}
     product_id_scores = {graph.node[id_]['entity_id']:product_scores[idx] for id_, idx in product_mapping.iteritems()}
 
