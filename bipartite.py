@@ -178,10 +178,12 @@ if __name__ == "__main__":
         print e
         sys.exit()
 
+    # run alg on these countries, if empty, run on all countries
     country_list = sys.argv[2] if 2 in sys.argv else ['USA', 'GBR', 'CHN', 'PRK', 'IRQ']
 
-    product_list = sys.argv[3] if 3 in sys.argv else [u'15720890', u'13681091', u'18920590', u'16845910']
-
+    # run alg on these products, if empty, run on all products
+    # product_list = sys.argv[3] if 3 in sys.argv else [u'15720890', u'13681091', u'18920590', u'16845910']
+    product_list = []
 
     import_export_data = load_im_ex_data(im_ex_file)
 
@@ -189,7 +191,7 @@ if __name__ == "__main__":
 
     country_mapping, product_mapping, country_prod_matrix, prod_country_matrix = calc_transition_matrixs(graph)
 
-    country_scores, product_scores = run_bipartite(country_prod_matrix, prod_country_matrix, max_iter=100, tol=1.0e-8)
+    country_scores, product_scores = run_bipartite(country_prod_matrix, prod_country_matrix, max_iter=10000, tol=1.0e-5)
 
     country_id_scores = {graph.node[id_]['entity_id']:country_scores[idx] for id_, idx in country_mapping.iteritems()}
     product_id_scores = {graph.node[id_]['entity_id']:product_scores[idx] for id_, idx in product_mapping.iteritems()}
