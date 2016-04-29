@@ -106,47 +106,59 @@ def calc_transition_matrixs(graph):
             prod_country_matrix[product_mapping[each_product]][country_mapping[each_country]] \
                                 = graph[each_product][each_country]['weight']
 
-    # # handle "dangling" nodes
-    # # "dangling" nodes only consume energies, so we release these energies manually
-    # country_norm = np.sum(country_prod_matrix, 1)
-    # for i in range(n_countries):
-    #     if country_norm[i] == 0:
-    #         country_prod_matrix[i] = 1.0 / n_products
 
-    # product_norm = np.sum(prod_country_matrix, 1)
-    # for i in range(n_products):
-    #     if product_norm[i] == 0:
-    #         prod_country_matrix[i] = 1.0 / n_countries
+
+    # handle "dangling" nodes
+    # "dangling" nodes only consume energies, so we release these energies manually
+    country_norm = np.sum(country_prod_matrix, 1)
+    for i in range(n_countries):
+        if country_norm[i] == 0:
+            country_prod_matrix[i] = 1.0 / n_products
+
+
+    product_norm = np.sum(prod_country_matrix, 1)
+    for i in range(n_products):
+        if product_norm[i] == 0:
+            prod_country_matrix[i] = 1.0 / n_countries
 
 
     return country_mapping, product_mapping, country_prod_matrix, prod_country_matrix
 
 
 
-def run_bipartite(country_prod_matrix, prod_country_matrix, max_iter=100, tol=1.0e-8):
+def run_bipartite(country_prod_matrix, prod_country_matrix, max_iter=1000, tol=1.0e-8):
     """
     run bipartite alg
     """
+
+    # country - country transition matrix
+    country_country_matrix = country_prod_matrix.dot(prod_country_matrix)
+
+
     n_countries, n_products = country_prod_matrix.shape
     country_scores = np.ones((n_countries, ))
     product_scores = np.ones((n_products, ))
 
 
+    # propogation on a bipartite network
     # power iteration: make up to max_iter iterations
     # set country_scores as convergence condition
     itr = 0
     while True:
         country_scores_last = country_scores
-        product_scores_last = product_scores
 
-        # propogation on a bipartite network
-
-
+        # I) Two stage transition
         # 1) country to product
-        product_scores = country_scores.dot(country_prod_matrix)
+        # product_scores = country_scores.dot(country_prod_matrix)
 
-        # 2) product to country
-        country_scores = product_scores.dot(prod_country_matrix)
+        # # 2) product to country
+        # country_scores = product_scores.dot(prod_country_matrix)
+
+
+
+        # II) One stage transition
+        # country to country
+        country_scores = country_scores.dot(country_country_matrix)
 
 
         # check convergence, l1 norm
@@ -162,7 +174,11 @@ def run_bipartite(country_prod_matrix, prod_country_matrix, max_iter=100, tol=1.
         itr += 1
 
 
+    # update product_scores
+    product_scores = country_scores.dot(country_prod_matrix)
+
     return country_scores, product_scores
+
 
 
 def load_im_ex_data(in_file):
@@ -184,6 +200,13 @@ def load_im_ex_data(in_file):
         exit()
 
 
+def normalize(x, range_=100.0):
+    max_, min_ = np.max(x), np.min(x)
+
+    return (x - min_) * range_ / (max_ - min_) if not max_ == min_ else range_ * x / max_
+
+
+
 if __name__ == "__main__":
     try:
         im_ex_file = sys.argv[1]
@@ -192,8 +215,10 @@ if __name__ == "__main__":
         sys.exit()
 
     # run alg on these countries, if empty, run on all countries
-    #country_list = sys.argv[2] if 2 in sys.argv else ['usa', 'gbr', 'chn', 'prk', 'irq']
-    country_list = ["ago","bdi","ben","bfa","bwa","caf","civ","cmr","cod","cog","com","cpv","dji","dza","egy","eri","esh","eth","gab","gha","gin","gmb","gnb","gnq","ken","lbr","lby","lso","mar","mdg","mli","moz","mrt","mus","mwi","myt","nam","ner","nga","reu","rwa","sdn","sen","shn","sle","som","ssd","stp","swz","syc","tcd","tgo","tun","tza","uga","zaf","zmb","zwe","ata","atf","bvt","hmd","sgs","afg","are","arm","aze","bgd","bhr","brn","btn","cck","chn","cxr","cyp","geo","hkg","idn","ind","iot","irn","irq","isr","jor","jpn","kaz","kgz","khm","kor","kwt","lao","lbn","lka","mac","mdv","mid","mmr","mng","mys","npl","omn","pak","phl","prk","pse","qat","sau","sgp","syr","tha","tjk","tkm","tls","tur","twn","uzb","vnm","yar","yem","ymd","alb","and","aut","bel","bgr","bih","blr","blx","che","chi","csk","cze","ddr","deu","dnk","esp","est","fdr","fin","fra","fro","gbr","gib","grc","hrv","hun","imn","irl","isl","ita","ksv","lie","ltu","lux","lva","mco","mda","mkd","mlt","mne","nld","nor","pol","prt","rou","rus","scg","sjm","smr","srb","sun","svk","svn","swe","ukr","vat","yug","abw","aia","ant","atg","bes","bhs","blm","blz","bmu","brb","can","cri","cub","cuw","cym","dma","dom","grd","grl","gtm","hnd","hti","jam","kna","lca","maf","mex","msr","mtq","naa","nic","pan","pci","pcz","pri","slv","spm","tca","tto","umi","usa","vct","vgb","vir","asm","aus","cok","fji","fsm","glp","gum","kir","mhl","mnp","ncl","nfk","niu","nru","nzl","pcn","plw","png","pyf","slb","tkl","ton","tuv","vut","wlf","wsm","arg","bol","bra","chl","col","ecu","flk","guf","guy","per","pry","sur","ury","ven"]
+    country_list = sys.argv[2] if 2 in sys.argv else \
+            ["ago","bdi","ben","bfa","bwa","caf","civ","cmr","cod","cog","com","cpv","dji","dza","egy","eri","esh","eth","gab","gha","gin","gmb","gnb","gnq","ken","lbr","lby","lso","mar","mdg","mli","moz","mrt","mus","mwi","myt","nam","ner","nga","reu","rwa","sdn","sen","shn","sle","som","ssd","stp","swz","syc","tcd","tgo","tun","tza","uga","zaf","zmb","zwe","ata","atf","bvt","hmd","sgs","afg","are","arm","aze","bgd","bhr","brn","btn","cck","chn","cxr","cyp","geo","hkg","idn","ind","iot","irn","irq","isr","jor","jpn","kaz","kgz","khm","kor","kwt","lao","lbn","lka","mac","mdv","mid","mmr","mng","mys","npl","omn","pak","phl","prk","pse","qat","sau","sgp","syr","tha","tjk","tkm","tls","tur","twn","uzb","vnm","yar","yem","ymd","alb","and","aut","bel","bgr","bih","blr","blx","che","chi","csk","cze","ddr","deu","dnk","esp","est","fdr","fin","fra","fro","gbr","gib","grc","hrv","hun","imn","irl","isl","ita","ksv","lie","ltu","lux","lva","mco","mda","mkd","mlt","mne","nld","nor","pol","prt","rou","rus","scg","sjm","smr","srb","sun","svk","svn","swe","ukr","vat","yug","abw","aia","ant","atg","bes","bhs","blm","blz","bmu","brb","can","cri","cub","cuw","cym","dma","dom","grd","grl","gtm","hnd","hti","jam","kna","lca","maf","mex","msr","mtq","naa","nic","pan","pci","pcz","pri","slv","spm","tca","tto","umi","usa","vct","vgb","vir","asm","aus","cok","fji","fsm","glp","gum","kir","mhl","mnp","ncl","nfk","niu","nru","nzl","pcn","plw","png","pyf","slb","tkl","ton","tuv","vut","wlf","wsm","arg","bol","bra","chl","col","ecu","flk","guf","guy","per","pry","sur","ury","ven"]
+
+
     # run alg on these products, if empty, run on all products
     # product_list = sys.argv[3] if 3 in sys.argv else [u'15720890', u'13681091', u'18920590', u'16845910']
     product_list = []
@@ -206,6 +231,9 @@ if __name__ == "__main__":
 
     country_scores, product_scores = run_bipartite(country_prod_matrix, prod_country_matrix, max_iter=10000, tol=1.0e-5)
 
+    # normalize scores to [0, 100]
+    country_scores = normalize(country_scores)
+    product_scores = normalize(product_scores)
 
     country_id_scores = {graph.node[id_]['entity_id']:country_scores[idx] for id_, idx in country_mapping.iteritems()}
     product_id_scores = {graph.node[id_]['entity_id']:product_scores[idx] for id_, idx in product_mapping.iteritems()}
@@ -220,11 +248,11 @@ if __name__ == "__main__":
 
     print "\ntop 10 countries"
     for id_, score in country_id_scores[:10]:
-        print "%s: %s" % (id_, score)
+        print "%s: %s" % (id_, round(score, 1))
 
     print "\ntop 10 products"
     for id_, score in product_id_scores[:10]:
-        print "%s: %s" % (id_, score)
+        print "%s: %s" % (id_, round(score, 1))
 
 
 
