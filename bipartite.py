@@ -119,7 +119,7 @@ def run_bipartite(country_prod_matrix, prod_country_matrix, max_iter=100, tol=1.
     country_scores = np.ones((n_countries, ))
     product_scores = np.ones((n_products, ))
 
-
+    import pdb;pdb.set_trace()
     # power iteration: make up to max_iter iterations
     # set country_scores as convergence condition
     itr = 0
@@ -128,6 +128,7 @@ def run_bipartite(country_prod_matrix, prod_country_matrix, max_iter=100, tol=1.
         product_scores_last = product_scores
 
         # propogation on a bipartite network
+
 
         # 1) country to product
         product_scores = country_scores.dot(country_prod_matrix)
@@ -193,6 +194,7 @@ if __name__ == "__main__":
 
     country_scores, product_scores = run_bipartite(country_prod_matrix, prod_country_matrix, max_iter=10000, tol=1.0e-5)
 
+    import pdb;pdb.set_trace()
     country_id_scores = {graph.node[id_]['entity_id']:country_scores[idx] for id_, idx in country_mapping.iteritems()}
     product_id_scores = {graph.node[id_]['entity_id']:product_scores[idx] for id_, idx in product_mapping.iteritems()}
 
