@@ -2,6 +2,17 @@ import bipartite
 import json
 import sys
 
+def write_to_csv(scores, name='country_scores.csv'):
+    try:
+        with open(name, 'w') as fp:
+            for k, v in scores:
+                fp.writelines("%s, %s\n"%(k, v))
+        fp.close()
+
+    except Exception, e:
+        print e
+        exit()
+
 if __name__ == "__main__":
     try:
         dir = sys.argv[1]
@@ -45,6 +56,7 @@ if __name__ == "__main__":
 
         country_rank_year[year]=country_id_scores
         product_rank_year[year]=product_id_scores
+        if year == 2000: write_to_csv(country_id_scores, "country_scores.csv")
 
 
     with open("country_results.dat", 'w') as f:
