@@ -208,7 +208,7 @@ def normalize(x, range_=100.0):
 
 def normalize(x):
     sum = np.sum(x)
-    
+
     return x*100/sum
 
 def write_to_csv(scores, name='country_scores.csv'):
@@ -216,6 +216,7 @@ def write_to_csv(scores, name='country_scores.csv'):
         with open(name, 'w') as fp:
             for k, v in scores:
                 fp.writelines("%s, %s\n"%(k, v))
+            fp.close()
 
     except Exception, e:
         print e

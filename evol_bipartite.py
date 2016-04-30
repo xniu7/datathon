@@ -386,6 +386,8 @@ def load_im_ex_data(in_file):
                 print "no data in the file!"
                 exit()
 
+            fp.close()
+
     except Exception, e:
         print e
         exit()
@@ -397,6 +399,7 @@ def write_to_csv(scores, name='country_scores.csv'):
         with open(name, 'w') as fp:
             for k, v in scores:
                 fp.writelines("%s, %s\n"%(k, v))
+            fp.close()
 
     except Exception, e:
         print e
@@ -437,7 +440,8 @@ if __name__ == "__main__":
     else:
         data_root = "../data/cum"
 
-        years = range(1962, 2015)
+        # years = range(1962, 2015)
+        years = range(2014, 1961, -1)
         file_list = ["%s/%s"%(data_root, y) for y in years]
 
 
@@ -480,8 +484,8 @@ if __name__ == "__main__":
 
     eps = 1e-5
     for idx in range(1, len(data_list) + 1):
-        if idx == 10:
-            import pdb;pdb.set_trace()
+        # if idx == 10:
+        #     import pdb;pdb.set_trace()
 
         cum_country_country_matrix, cum_country_prod_matrix = \
                     eBip.calc_cum_transition_matrix(country_prod_matrix_list[:idx])
