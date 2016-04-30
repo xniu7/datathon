@@ -1,6 +1,7 @@
 import networkx as nx
 import numpy as np
 import sys
+import os
 
 # G_copy.add_nodes_from(G.nodes(data=True))
 
@@ -70,7 +71,7 @@ class EvolBipartite:
             next_id += 1
 
 
-        # add country nodes
+        # add product nodes
         for product in self.product_list:
             graph.add_node(next_id,
                         type="product",
@@ -152,6 +153,12 @@ class EvolBipartite:
         cum_country_prod_matrix = cum_country_country_matrix.dot(country_prod_matrix_list[-1][0])
         cum_country_country_matrix = cum_country_prod_matrix.dot(country_prod_matrix_list[-1][1])
 
+
+        # make stochastic column matrices
+        cum_country_country_matrix = self.make_column_stochastic_matrix(cum_country_country_matrix)
+        cum_country_prod_matrix = self.make_column_stochastic_matrix(cum_country_prod_matrix)
+
+
         return cum_country_country_matrix, cum_country_prod_matrix
 
 
@@ -197,6 +204,166 @@ class EvolBipartite:
 
 
 
+
+
+    def from_transition_to_matrix(self, transition_matrix):
+        graph = nx.DiGraph()
+
+        # add country nodes
+        for country in self.country_list:
+            graph.add_node(self.country_ids[country],
+                        type="country",
+                        entity_id=country
+                        )
+
+        # add country - country edges
+        for graph_id, idx in self.country_mapping.iteritems():
+            for graph_id2, idx2 in self.country_mapping.iteritems():
+                if transition_matrix[idx][idx2] > 0:
+                    graph.add_edge(graph_id, graph_id2, weight=transition_matrix[idx][idx2])
+
+        return graph
+
+
+    def run_pagerank(self, G, alpha=0.85, pers=None, max_iter=1000,
+                             tol=1.0e-6, nstart=None, weight='weight', node_types=None):
+        """Return the PageRank of the nodes in the graph.
+
+        PageRank computes a ranking of the nodes in the graph G based on
+        the structure of the incoming links. It was originally designed as
+        an algorithm to rank web pages.
+
+        Parameters
+        -----------
+        G : graph
+            A NetworkX graph
+
+        alpha : float, optional
+            Damping parameter for PageRank, default=0.85
+
+        pers: dict, optional
+             The "pers vector" consisting of a dictionary with a
+             key for every graph node and nonzero pers value for each node.
+
+        max_iter : integer, optional
+            Maximum number of iterations in power method eigenvalue solver.
+
+        tol : float, optional
+            Error tolerance used to check convergence in power method solver.
+
+        nstart : dictionary, optional
+            Starting value of PageRank iteration for each node.
+
+        weight : key, optional
+            Edge data key to use as weight. If None weights are set to 1.
+
+        Returns
+        -------
+        pagerank : dictionary
+             Dictionary of nodes with PageRank as value
+
+        Notes
+        -----
+        The eigenvector calculation is done by the power iteration method
+        and has no guarantee of convergence.    The iteration will stop
+        after max_iter iterations or an error tolerance of
+        number_of_nodes(G)*tol has been reached.
+        """
+
+        if len(G) == 0:
+                return {}
+
+        # create a copy in (right) stochastic form
+        W = nx.stochastic_graph(G, weight=weight)
+
+        scale = 1.0 / W.number_of_nodes()
+
+        # choose fixed starting vector if not given
+        if nstart is None:
+            x = dict.fromkeys(W, scale)
+        else:
+            x = nstart
+            # normalize starting vector to 1
+            s = 1.0/sum(x.values())
+            for k in x: x[k]*=s
+
+        # assign uniform pers vector if not given
+        if pers is None:
+            pers = dict.fromkeys(W, scale)
+        else:
+            # Normalize the sum to 1
+            s = sum(pers.values())
+
+            for k in pers.keys():
+                pers[k] /= s
+
+            if len(pers)!=len(G):
+                    raise Exception('Personalization vector must have a value for every node')
+
+
+        # "dangling" nodes, no links out from them
+        out_degree = W.out_degree()
+        dangle = [n for n in W if out_degree[n]==0.0]
+
+        itr = 0
+        while True: # power iteration: make up to max_iter iterations
+            xlast = x
+            x = dict.fromkeys(xlast.keys(), 0)
+
+            # "dangling" nodes only consume energies, so we release these energies manually
+            danglesum = alpha*scale*sum(xlast[n] for n in dangle)
+            # danglesum = 0
+
+            for n in x:
+                # this matrix multiply looks odd because it is
+                # doing a left multiply x^T=xlast^T*W
+                for nbr in W[n]:
+                    x[nbr] += alpha*xlast[n]*W[n][nbr][weight]
+
+                x[n] += danglesum + (1 - alpha) * pers[n]
+
+            # normalize vector
+            s = 1.0 / sum(x.values())
+            for n in x:
+                x[n]*=s
+
+
+            # check convergence, l1 norm
+            err = sum([abs(x[n] - xlast[n]) for n in x])
+            if err < tol:
+                print "converged in %d iterations." % itr
+                break
+            if itr > max_iter:
+                raise Exception('pagerank: power iteration failed to converge '
+                                                        'in %d iterations.'%(itr-1))
+            itr += 1
+
+
+
+        # Returns:
+        #   x: PageRank of each node;
+        #   l: Detailed contributions of each layer;
+        #   itr: Iterations to converge.
+
+        return x, itr
+
+
+
+
+
+    def make_column_stochastic_matrix(self, matrix):
+        n_rows, _ = matrix.shape
+
+        sum_ = np.sum(matrix, 1)
+        for i in range(n_rows):
+            if sum_[i] != 1:
+                matrix[i] = matrix[i] / sum_[i]
+
+        return matrix
+
+
+
+
 def load_all_data(file_list):
     data_list = []
     for in_file in file_list:
@@ -236,7 +403,7 @@ def write_to_csv(scores, name='country_scores.csv'):
         exit()
 
 
-def normalize(x, range_=100.0, method='linear'):
+def normalize2(x, range_=100.0, method='linear'):
     if method == 'linear':
         max_, min_ = np.max(x), np.min(x)
         return (x - min_) * range_ / (max_ - min_) if not max_ == min_ else range_ * x / max_
@@ -247,12 +414,36 @@ def normalize(x, range_=100.0, method='linear'):
         exit()
 
 
+
+def normalize(x):
+    sum = np.sum(x)
+
+    return x*100/sum
+
+
+
+
+
+
 if __name__ == "__main__":
-    try:
+
+    path = "results/cum"
+    if not os.path.exists(path):
+        os.makedirs(path)
+
+
+    if len(sys.argv) > 1:
         file_list = sys.argv[1:]
-    except Exception, e:
-        print e
-        sys.exit()
+    else:
+        data_root = "../data/cum"
+
+        years = range(1962, 2015)
+        file_list = ["%s/%s"%(data_root, y) for y in years]
+
+
+    print "# of data files: %s" % len(file_list)
+
+
 
 
     # load all data
@@ -287,14 +478,32 @@ if __name__ == "__main__":
     print "summary"
     print "###########"
 
-
+    eps = 1e-5
     for idx in range(1, len(data_list) + 1):
+        if idx == 10:
+            import pdb;pdb.set_trace()
+
         cum_country_country_matrix, cum_country_prod_matrix = \
                     eBip.calc_cum_transition_matrix(country_prod_matrix_list[:idx])
 
-        country_scores, product_scores = eBip.run_bipartite(cum_country_country_matrix, cum_country_prod_matrix, max_iter=10000, tol=1.0e-5)
 
-        # normalize scores to [0, 100]
+        # 1) run bipartite alg
+        country_scores, product_scores = eBip.run_bipartite(cum_country_country_matrix, cum_country_prod_matrix, max_iter=10000, tol=eps)
+
+
+
+        # # 2) run pagerank
+        # graph = eBip.from_transition_to_matrix(cum_country_country_matrix)
+        # scores, _ = eBip.run_pagerank(graph)
+
+        # country_scores = np.ones((eBip.n_countries, ))
+        # for id_, idxx in eBip.country_mapping.iteritems():
+        #     country_scores[idxx] = scores[id_]
+
+
+
+
+        # normalize scores
         country_scores = normalize(country_scores)
         product_scores = normalize(product_scores)
 
@@ -306,17 +515,17 @@ if __name__ == "__main__":
 
 
         # write to csv
-        write_to_csv(country_id_scores, "country_scores_%s.csv"%idx)
-        write_to_csv(product_id_scores, "product_scores_%s.csv"%idx)
+        write_to_csv(country_id_scores, "%s/country_scores_%s.csv"%(path, idx))
+        write_to_csv(product_id_scores, "%s/product_scores_%s.csv"%(path, idx))
 
 
         print "\n Ranking based on the records from the Year 1 to Year %s:" % idx
         print "\ntop 10 countries"
         for id_, score in country_id_scores[:10]:
-            print "%s: %s" % (id_, round(score, 1))
+            print "%s: %s" % (id_, round(score, 2))
 
         print "\ntop 10 products"
         for id_, score in product_id_scores[:10]:
-            print "%s: %s" % (id_, round(score, 1))
+            print "%s: %s" % (id_, round(score, 2))
 
 
