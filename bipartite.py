@@ -200,11 +200,27 @@ def load_im_ex_data(in_file):
         exit()
 
 
-def normalize(x, range_=100.0):
-    max_, min_ = np.max(x), np.min(x)
+def write_to_csv(scores, name='country_scores.csv'):
 
-    return (x - min_) * range_ / (max_ - min_) if not max_ == min_ else range_ * x / max_
+    try:
+        with open(name, 'w') as fp:
+            for k, v in scores:
+                fp.writelines("%s, %s\n"%(k, v))
 
+    except Exception, e:
+        print e
+        exit()
+
+
+def normalize(x, range_=100.0, method='linear'):
+    if method == 'linear':
+        max_, min_ = np.max(x), np.min(x)
+        return (x - min_) * range_ / (max_ - min_) if not max_ == min_ else range_ * x / max_
+    elif method == 'log':
+        pass
+    else:
+        print "invalid argument method: %s" % method
+        exit()
 
 
 if __name__ == "__main__":
@@ -240,6 +256,11 @@ if __name__ == "__main__":
 
     country_id_scores = sorted(country_id_scores.iteritems(), key=lambda d:d[1], reverse=True)
     product_id_scores = sorted(product_id_scores.iteritems(), key=lambda d:d[1], reverse=True)
+
+
+    # write to csv
+    write_to_csv(country_id_scores)
+
 
 
     print "###########"
