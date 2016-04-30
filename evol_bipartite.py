@@ -164,7 +164,7 @@ class EvolBipartite:
 
         return cum_country_country_matrix, cum_country_prod_matrix
     '''
-            
+
     def calc_cum_transition_matrix(self, country_prod_matrix_list):
         """
         compute cumulative transition matrices given a list of country_prod_matrix and prod_country_matrix.
@@ -174,7 +174,7 @@ class EvolBipartite:
         for country_prod_matrix, prod_country_matrix in country_prod_matrix_list[:]:
             country_country_matrix = country_prod_matrix.dot(prod_country_matrix)
             country_country_matrix_list.append(country_country_matrix)
-        
+
         cum_country_country_matrix = np.identity(self.n_countries)
         for country_country_matrix in country_country_matrix_list:
             country_country_matrix = alpha*np.identity(self.n_countries)+(1-alpha)*country_country_matrix
@@ -183,7 +183,7 @@ class EvolBipartite:
         cum_country_country_matrix = np.zeros((self.n_countries, self.n_countries))
         for country_country_matrix in country_country_matrix_list:
             cum_country_country_matrix += country_country_matrix
-        
+
         row_sums = cum_country_country_matrix.sum(axis=1)
         cum_country_country_matrix /= row_sums[:, np.newaxis]
         '''
@@ -413,6 +413,8 @@ def load_im_ex_data(in_file):
                 print "no data in the file!"
                 exit()
 
+            fp.close()
+
     except Exception, e:
         print e
         exit()
@@ -424,6 +426,7 @@ def write_to_csv(scores, name='country_scores.csv'):
         with open(name, 'w') as fp:
             for k, v in scores:
                 fp.writelines("%s, %s\n"%(k, v))
+            fp.close()
 
     except Exception, e:
         print e
@@ -451,7 +454,6 @@ def normalize(x):
 
 
 
-
 if __name__ == "__main__":
 
     path = "results/cum"
@@ -464,7 +466,8 @@ if __name__ == "__main__":
     else:
         data_root = "../data/cum"
 
-        years = range(1962, 2015)
+        # years = range(1962, 2015)
+        years = range(2014, 1961, -1)
         file_list = ["%s/%s"%(data_root, y) for y in years]
 
 
@@ -512,6 +515,7 @@ if __name__ == "__main__":
 
     for idx in range(1, len(data_list) + 1):
         #if idx == 10: import pdb;pdb.set_trace()
+
 
         cum_country_country_matrix, cum_country_prod_matrix = \
                     eBip.calc_cum_transition_matrix(country_prod_matrix_list[:idx])
