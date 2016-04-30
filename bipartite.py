@@ -199,11 +199,17 @@ def load_im_ex_data(in_file):
         print e
         exit()
 
-
+'''
 def normalize(x, range_=100.0):
     max_, min_ = np.max(x), np.min(x)
 
     return (x - min_) * range_ / (max_ - min_) if not max_ == min_ else range_ * x / max_
+'''
+
+def normalize(x):
+    sum = np.sum(x)
+    
+    return x*100/sum
 
 
 
@@ -248,11 +254,11 @@ if __name__ == "__main__":
 
     print "\ntop 10 countries"
     for id_, score in country_id_scores[:10]:
-        print "%s: %s" % (id_, round(score, 1))
+        print "%s: %s" % (id_, round(score, 2))
 
     print "\ntop 10 products"
     for id_, score in product_id_scores[:10]:
-        print "%s: %s" % (id_, round(score, 1))
+        print "%s: %s" % (id_, round(score, 2))
 
 
 
