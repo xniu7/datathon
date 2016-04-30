@@ -1,0 +1,26 @@
+set term png
+set ylabel 'scores'
+set xlabel 'years'
+
+
+
+set yrange [0:14]
+set output 'product.png'
+plot 'product_result_plot.dat' using 1:2 with linespoints title 'Crude Petroleum', 'product_result_plot.dat' using 1:3 with linespoints title 'Gold', 'product_result_plot.dat' using 1:4 with linespoints title 'Computers', 'product_result_plot.dat' using 1:5 with linespoints title 'Telephone Sets'
+
+set output 'product_PG.png'
+plot 'product_result_plot.dat' using 1:2 with linespoints title 'Crude Petroleum', 'product_result_plot.dat' using 1:3 with linespoints title 'Gold'
+
+set output 'product_CT.png'
+plot 'product_result_plot.dat' using 1:4 with linespoints lt 3 title 'Computers', 'product_result_plot.dat' using 1:5 with linespoints lt 4 title 'Telephones Sets'
+
+
+set yrange [0:20]
+
+set output 'country.png'
+plot 'country_result_plot.dat' using 1:2 with linespoints title 'USA', 'country_result_plot.dat' using 1:3 with linespoints title 'China', 'country_result_plot.dat' using 1:5 with linespoints title 'Japan','country_result_plot.dat' using 1:12 with linespoints title 'Saudi Arabia'
+
+set output 'country_cum.png'
+plot 'country_result_cum_plot.dat' using 1:2 with linespoints title 'USA', 'country_result_cum_plot.dat' using 1:3 with linespoints title 'China', 'country_result_cum_plot.dat' using 1:5 with linespoints title 'Japan','country_result_cum_plot.dat' using 1:12 with linespoints title 'Saudi Arabia', 'country_result_cum_plot.dat' using 1:6 with linespoints title 'Germany', 'country_result_cum_plot.dat' using 1:7 with linespoints title 'UK'
+
+#, 'country_result_cum_plot.dat' using 1:8 with linespoints title 'Russia', 'country_result_cum_plot.dat' using 1:4 with linespoints title 'India', 'country_result_cum_plot.dat' using 1:9 with linespoints title 'Iraq', 'country_result_cum_plot.dat' using 1:10 with linespoints title 'Iran', 'country_result_cum_plot.dat' using 1:11 with linespoints title 'Afghanistan', 'country_result_cum_plot.dat' using 1:13 with linespoints title 'Greece', 'country_result_cum_plot.dat' using 1:14 with linespoints title 'Iceland'
