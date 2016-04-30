@@ -6,7 +6,7 @@ import sys
 
 
 class EvolBipartite:
-    def __init__():
+    def __init__(self):
         self.country_ids = {} # country id - graph id mapping
         self.product_ids = {} # product id - graph id mapping
         self.country_list = [] # country list
@@ -247,7 +247,7 @@ def normalize(x, range_=100.0, method='linear'):
 
 if __name__ == "__main__":
     try:
-        file_list = sys.argv.values()[1:]
+        file_list = sys.argv[1:]
     except Exception, e:
         print e
         sys.exit()
