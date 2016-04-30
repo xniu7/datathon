@@ -139,7 +139,7 @@ class EvolBipartite:
         return country_prod_matrix, prod_country_matrix
 
 
-
+    '''
     def calc_cum_transition_matrix(self, country_prod_matrix_list):
         """
         compute cumulative transition matrices given a list of country_prod_matrix and prod_country_matrix.
@@ -147,6 +147,9 @@ class EvolBipartite:
 
         cum_country_country_matrix = np.identity(self.n_countries)
         for country_prod_matrix, prod_country_matrix in country_prod_matrix_list[:-1]:
+            cc = country_prod_matrix.dot(prod_country_matrix)
+            n_cc = cc
+            cum_country_country_matrix.dot(ncc)
             cum_country_country_matrix = cum_country_country_matrix.dot(country_prod_matrix).dot(prod_country_matrix)
 
 
@@ -160,7 +163,31 @@ class EvolBipartite:
 
 
         return cum_country_country_matrix, cum_country_prod_matrix
+    '''
 
+    def calc_cum_transition_matrix(self, country_prod_matrix_list):
+        """
+        compute cumulative transition matrices given a list of country_prod_matrix and prod_country_matrix.
+        """
+        alpha = 0.9
+        country_country_matrix_list = []
+        for country_prod_matrix, prod_country_matrix in country_prod_matrix_list[:]:
+            country_country_matrix = country_prod_matrix.dot(prod_country_matrix)
+            country_country_matrix_list.append(country_country_matrix)
+
+        cum_country_country_matrix = np.identity(self.n_countries)
+        for country_country_matrix in country_country_matrix_list:
+            country_country_matrix = alpha*np.identity(self.n_countries)+(1-alpha)*country_country_matrix
+            cum_country_country_matrix=cum_country_country_matrix.dot(country_country_matrix)
+        '''
+        cum_country_country_matrix = np.zeros((self.n_countries, self.n_countries))
+        for country_country_matrix in country_country_matrix_list:
+            cum_country_country_matrix += country_country_matrix
+
+        row_sums = cum_country_country_matrix.sum(axis=1)
+        cum_country_country_matrix /= row_sums[:, np.newaxis]
+        '''
+        return cum_country_country_matrix, country_prod_matrix
 
 
 
@@ -427,7 +454,6 @@ def normalize(x):
 
 
 
-
 if __name__ == "__main__":
 
     path = "results/cum"
@@ -483,9 +509,13 @@ if __name__ == "__main__":
     print "###########"
 
     eps = 1e-5
+
+    country_rank_year = {}
+    product_rank_year = {}
+
     for idx in range(1, len(data_list) + 1):
-        # if idx == 10:
-        #     import pdb;pdb.set_trace()
+        #if idx == 10: import pdb;pdb.set_trace()
+
 
         cum_country_country_matrix, cum_country_prod_matrix = \
                     eBip.calc_cum_transition_matrix(country_prod_matrix_list[:idx])
@@ -522,6 +552,10 @@ if __name__ == "__main__":
         write_to_csv(country_id_scores, "%s/country_scores_%s.csv"%(path, idx))
         write_to_csv(product_id_scores, "%s/product_scores_%s.csv"%(path, idx))
 
+        year = idx-1+1962
+        country_rank_year[year]=country_id_scores
+        product_rank_year[year]=product_id_scores
+
 
         print "\n Ranking based on the records from the Year 1 to Year %s:" % idx
         print "\ntop 10 countries"
@@ -531,5 +565,12 @@ if __name__ == "__main__":
         print "\ntop 10 products"
         for id_, score in product_id_scores[:10]:
             print "%s: %s" % (id_, round(score, 2))
+
+    with open("country_results.dat", 'w') as f:
+        f.write(str(country_rank_year))
+        f.close()
+    with open("product_results.dat", 'w') as f:
+        f.write(str(product_rank_year))
+        f.close()
 
 
