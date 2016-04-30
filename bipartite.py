@@ -199,7 +199,6 @@ def load_im_ex_data(in_file):
         print e
         exit()
 
-<<<<<<< HEAD
 '''
 def normalize(x, range_=100.0):
     max_, min_ = np.max(x), np.min(x)
@@ -211,10 +210,8 @@ def normalize(x):
     sum = np.sum(x)
     
     return x*100/sum
-=======
 
 def write_to_csv(scores, name='country_scores.csv'):
-
     try:
         with open(name, 'w') as fp:
             for k, v in scores:
@@ -223,9 +220,8 @@ def write_to_csv(scores, name='country_scores.csv'):
     except Exception, e:
         print e
         exit()
->>>>>>> 6ce43b327256ff05d94a3ceea66d91554e34bf3e
 
-
+'''
 def normalize(x, range_=100.0, method='linear'):
     if method == 'linear':
         max_, min_ = np.max(x), np.min(x)
@@ -235,6 +231,7 @@ def normalize(x, range_=100.0, method='linear'):
     else:
         print "invalid argument method: %s" % method
         exit()
+'''
 
 
 if __name__ == "__main__":
