@@ -103,6 +103,8 @@ class EvolBipartite:
         country_prod_matrix = np.zeros((self.n_countries, self.n_products))
         prod_country_matrix = np.zeros((self.n_products, self.n_countries))
 
+        countries = [u for u in graph.nodes() if graph.node[u]["type"] == "country"]
+        products = [u for u in graph.nodes() if graph.node[u]["type"] == "product"]
 
         # compute country_prod_matrix (imports)
         for each_country in countries:
@@ -160,8 +162,8 @@ class EvolBipartite:
         run bipartite alg
         """
 
-        country_scores = np.ones((n_countries, ))
-        product_scores = np.ones((n_products, ))
+        country_scores = np.ones((self.n_countries, ))
+        product_scores = np.ones((self.n_products, ))
 
 
         # propogation on a bipartite network
@@ -252,6 +254,11 @@ if __name__ == "__main__":
         print e
         sys.exit()
 
+
+    # load all data
+    data_list = load_all_data(file_list)
+
+
     # run alg on these countries, if empty, run on all countries
     country_list = sys.argv[2] if 2 in sys.argv else \
             ["ago","bdi","ben","bfa","bwa","caf","civ","cmr","cod","cog","com","cpv","dji","dza","egy","eri","esh","eth","gab","gha","gin","gmb","gnb","gnq","ken","lbr","lby","lso","mar","mdg","mli","moz","mrt","mus","mwi","myt","nam","ner","nga","reu","rwa","sdn","sen","shn","sle","som","ssd","stp","swz","syc","tcd","tgo","tun","tza","uga","zaf","zmb","zwe","ata","atf","bvt","hmd","sgs","afg","are","arm","aze","bgd","bhr","brn","btn","cck","chn","cxr","cyp","geo","hkg","idn","ind","iot","irn","irq","isr","jor","jpn","kaz","kgz","khm","kor","kwt","lao","lbn","lka","mac","mdv","mid","mmr","mng","mys","npl","omn","pak","phl","prk","pse","qat","sau","sgp","syr","tha","tjk","tkm","tls","tur","twn","uzb","vnm","yar","yem","ymd","alb","and","aut","bel","bgr","bih","blr","blx","che","chi","csk","cze","ddr","deu","dnk","esp","est","fdr","fin","fra","fro","gbr","gib","grc","hrv","hun","imn","irl","isl","ita","ksv","lie","ltu","lux","lva","mco","mda","mkd","mlt","mne","nld","nor","pol","prt","rou","rus","scg","sjm","smr","srb","sun","svk","svn","swe","ukr","vat","yug","abw","aia","ant","atg","bes","bhs","blm","blz","bmu","brb","can","cri","cub","cuw","cym","dma","dom","grd","grl","gtm","hnd","hti","jam","kna","lca","maf","mex","msr","mtq","naa","nic","pan","pci","pcz","pri","slv","spm","tca","tto","umi","usa","vct","vgb","vir","asm","aus","cok","fji","fsm","glp","gum","kir","mhl","mnp","ncl","nfk","niu","nru","nzl","pcn","plw","png","pyf","slb","tkl","ton","tuv","vut","wlf","wsm","arg","bol","bra","chl","col","ecu","flk","guf","guy","per","pry","sur","ury","ven"]
@@ -259,11 +266,8 @@ if __name__ == "__main__":
 
     # run alg on these products, if empty, run on all products
     # product_list = sys.argv[3] if 3 in sys.argv else [u'15720890', u'13681091', u'18920590', u'16845910']
-    product_list = []
 
-    # load all data
-    file_list = []
-    data_list = load_all_data(file_list)
+    product_list = set([each_prod['id'] for each_record in data_list for country_record in each_record.values() for each_prod in country_record])
 
     eBip = EvolBipartite()
 
