@@ -19,7 +19,7 @@ def generateShowData(rawData, products):
         for (id, score) in id_scores:
             if id not in products.keys(): continue
             
-            current_year[products[id]]+=score
+            current_year[products[id]]+=score/100
     return show_data
 
 filename= sys.argv[1]
